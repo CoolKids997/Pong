@@ -1,205 +1,198 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-   <title>Pong Game In JavaScript</title>
-   <style>
-      #box {
-         padding: 0;
-         margin: auto;
-         display: block;
-         border: 1px solid #333;
-      }
-   </style>
-   <script type="application/javascript">
-      // You can change these
-      // Speed of ball (pixels/step)
-      var ballSpeed = 3;
-      // Speed of CPU Paddle (pixels/step)
-      var cpuSpeed = 3;
+  <title>Basic Pong HTML Game</title>
+  <meta charset="UTF-8">
+  <style>
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
 
-      // Object coordinates
-      var ballX, ballY;
-      var paddle1X, paddle1Y;
-      var paddle2X, paddle2Y;
-      var mouseY;
-
-      // HTML object references
-      var paddle1;
-      var paddle2;
-      var ball;
-      var box;
-      var msg;
-      var canvas, ctx;
-
-      // For internal use
-      var dx, dy;
-      var isGameStarted = false;
-      var intervalId;
-      var isFrameInProgress = false;
-
-      // Attach a function to onLoad event
-      window.onload = init;
-
-      function drawObject(ctx, sprite, x, y) {
-         ctx.drawImage(sprite, x, y);
-      }
-
-      // Initialize game objects
-      function init() {
-         // Store references to objects
-         canvas = document.getElementById("box");
-         ctx = canvas.getContext("2d");
-         paddle1 = document.getElementById('paddle1');
-         paddle2 = document.getElementById('paddle2');
-         ball = document.getElementById('ball');
-         box = document.getElementById('box');
-         msg = document.getElementById('msg');
-
-         // Initial values
-         ballX = (box.width / 2) - (ball.width / 2);
-         ballY = (box.height / 2) - (ball.height / 2);
-         paddle1X = 20;
-         paddle1Y = (box.height / 2) - (paddle1.height / 2);
-         paddle2X = box.width - (20 + paddle2.width);
-         paddle2Y = (box.height / 2) - (paddle2.height / 2);
-
-         dx = dy = ballSpeed;
-
-         // Add click event listener
-         box.addEventListener("click", start);
-
-         redraw();
-
-         // Show message
-         msg.innerHTML = '<h2>Click on Paddle to Start Game.</h2>';
-      }
-
-      // START GAME
-      function start(e) {
-         if (isGameStarted) {
-            return;
-         }
-
-         // Update current mouse Y position
-         updateMouseY(e);
-
-         // Attach a function to onmousemove event of the box
-         box.onmousemove = updateMouseY;
-
-         // Call 'gameLoop()' function every 10 milliseconds
-         intervalId = setInterval('gameLoop()', 10);
-
-         msg.innerHTML = '';
-
-         isGameStarted = true;
-      }
-
-      // Redraw
-      function redraw() {
-         // Clear canvas
-         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-         // Draw everything
-         drawObject(ctx, paddle1, paddle1X, paddle1Y);
-         drawObject(ctx, paddle2, paddle2X, paddle2Y);
-         drawObject(ctx, ball, ballX, ballY);
-      }
-
-      function end(win) {
-         clearInterval(intervalId);
-         box.onmousemove = '';
-
-         // Reset everything
-         init();
-
-         if (win) {
-            msg.innerHTML = '<h2>You Win!<br/>Click on Paddle to Re-Start Game.</h2>';
-         } else {
-            msg.innerHTML = '<h2>You Loose!<br/>Click on Paddle to Re-Start Game.</h2>';
-         }
-         isGameStarted = false;
-      }
-
-      // Main game loop, called by the JavaScript timer
-      function gameLoop() {
-         // Make sure that this is not invoked when one frame is
-         // already in progress
-         if (isFrameInProgress) {
-            return;
-         }
-         isFrameInProgress = true;
-
-         // INPUT
-         // Player Paddle
-         var y = (mouseY - (box.offsetTop - document.documentElement.scrollTop));
-         // Prevent the paddle from going outside of the canvas
-         if (y > (box.height - paddle1.height)) {
-            y = (box.height - paddle1.height);
-         }
-         paddle1Y = y;
-
-         // UPDATE
-         // Ball
-         ballX += dx;
-         ballY += dy;
-
-         // CPU Paddle
-         if (dx > 0) {
-            if ((paddle2Y + (paddle2.height / 2)) > (ballY + ball.height)) paddle2Y -= cpuSpeed;
-            else paddle2Y += cpuSpeed;
-         }
-
-         // Collision detection
-         // If ball hits upper or lower wall
-         if (ballY < 0 || ((ballY + ball.height) > box.height))
-            dy = -dy; // Make x direction opposite
-
-         // If ball hits player paddle
-         if (ballX < (paddle1X + paddle1.width))
-            if (((ballY + ball.height) > paddle1Y) && ballY < (paddle1Y + paddle1.height))
-               dx = -dx;
-
-         // If ball hits CPU paddle
-         if ((ballX + ball.width) > paddle2X)
-            if (((ballY + ball.height) > paddle2Y) && ballY < (paddle2Y + paddle2.height))
-               dx = -dx;
-
-         // END?
-         // Win?
-         // See if ball is past CPU paddle
-         if ((ballX + ball.width) > box.width) {
-            end(true);
-         }
-
-         // Lose?
-         // See if ball is past player paddle
-         if (ballX < 0) {
-            end(false);
-         }
-
-         // RENDER
-         redraw();
-
-         // Frame completed
-         isFrameInProgress = false;
-      }
-
-      function updateMouseY(e) {
-         mouseY = e.clientY;
-      }
-   </script>
+  body {
+    background: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  </style>
 </head>
+<body>
+<canvas width="750" height="585" id="game"></canvas>
+<script>
+const canvas = document.getElementById('game');
+const context = canvas.getContext('2d');
+const grid = 15;
+const paddleHeight = grid * 5; // 80
+const maxPaddleY = canvas.height - grid - paddleHeight;
 
-<body bgcolor="#fff">
-   <h1 align="center">Pong Game Example in JavaScript</h1>
+var paddleSpeed = 6;
+var ballSpeed = 5;
 
-   <canvas width="840" height="480" id="box">
-      <img id="paddle1" src="paddle.PNG" />
-      <img id="paddle2" src="paddle.PNG" />
-      <img id="ball" src="ball_small.PNG" />
-   </canvas>
-   <div id="msg" align="center"></div>
+const leftPaddle = {
+  // start in the middle of the game on the left side
+  x: grid * 2,
+  y: canvas.height / 2 - paddleHeight / 2,
+  width: grid,
+  height: paddleHeight,
+
+  // paddle velocity
+  dy: 0
+};
+const rightPaddle = {
+  // start in the middle of the game on the right side
+  x: canvas.width - grid * 3,
+  y: canvas.height / 2 - paddleHeight / 2,
+  width: grid,
+  height: paddleHeight,
+
+  // paddle velocity
+  dy: 0
+};
+const ball = {
+  // start in the middle of the game
+  x: canvas.width / 2,
+  y: canvas.height / 2,
+  width: grid,
+  height: grid,
+
+  // keep track of when need to reset the ball position
+  resetting: false,
+
+  // ball velocity (start going to the top-right corner)
+  dx: ballSpeed,
+  dy: -ballSpeed
+};
+
+// check for collision between two objects using axis-aligned bounding box (AABB)
+// @see https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection
+function collides(obj1, obj2) {
+  return obj1.x < obj2.x + obj2.width &&
+         obj1.x + obj1.width > obj2.x &&
+         obj1.y < obj2.y + obj2.height &&
+         obj1.y + obj1.height > obj2.y;
+}
+
+// game loop
+function loop() {
+  requestAnimationFrame(loop);
+  context.clearRect(0,0,canvas.width,canvas.height);
+
+  // move paddles by their velocity
+  leftPaddle.y += leftPaddle.dy;
+  rightPaddle.y += rightPaddle.dy;
+
+  // prevent paddles from going through walls
+  if (leftPaddle.y < grid) {
+    leftPaddle.y = grid;
+  }
+  else if (leftPaddle.y > maxPaddleY) {
+    leftPaddle.y = maxPaddleY;
+  }
+
+  if (rightPaddle.y < grid) {
+    rightPaddle.y = grid;
+  }
+  else if (rightPaddle.y > maxPaddleY) {
+    rightPaddle.y = maxPaddleY;
+  }
+
+  // draw paddles
+  context.fillStyle = 'white';
+  context.fillRect(leftPaddle.x, leftPaddle.y, leftPaddle.width, leftPaddle.height);
+  context.fillRect(rightPaddle.x, rightPaddle.y, rightPaddle.width, rightPaddle.height);
+
+  // move ball by its velocity
+  ball.x += ball.dx;
+  ball.y += ball.dy;
+
+  // prevent ball from going through walls by changing its velocity
+  if (ball.y < grid) {
+    ball.y = grid;
+    ball.dy *= -1;
+  }
+  else if (ball.y + grid > canvas.height - grid) {
+    ball.y = canvas.height - grid * 2;
+    ball.dy *= -1;
+  }
+
+  // reset ball if it goes past paddle (but only if we haven't already done so)
+  if ( (ball.x < 0 || ball.x > canvas.width) && !ball.resetting) {
+    ball.resetting = true;
+
+    // give some time for the player to recover before launching the ball again
+    setTimeout(() => {
+      ball.resetting = false;
+      ball.x = canvas.width / 2;
+      ball.y = canvas.height / 2;
+    }, 400);
+  }
+
+  // check to see if ball collides with paddle. if they do change x velocity
+  if (collides(ball, leftPaddle)) {
+    ball.dx *= -1;
+
+    // move ball next to the paddle otherwise the collision will happen again
+    // in the next frame
+    ball.x = leftPaddle.x + leftPaddle.width;
+  }
+  else if (collides(ball, rightPaddle)) {
+    ball.dx *= -1;
+
+    // move ball next to the paddle otherwise the collision will happen again
+    // in the next frame
+    ball.x = rightPaddle.x - ball.width;
+  }
+
+  // draw ball
+  context.fillRect(ball.x, ball.y, ball.width, ball.height);
+
+  // draw walls
+  context.fillStyle = 'lightgrey';
+  context.fillRect(0, 0, canvas.width, grid);
+  context.fillRect(0, canvas.height - grid, canvas.width, canvas.height);
+
+  // draw dotted line down the middle
+  for (let i = grid; i < canvas.height - grid; i += grid * 2) {
+    context.fillRect(canvas.width / 2 - grid / 2, i, grid, grid);
+  }
+}
+
+// listen to keyboard events to move the paddles
+document.addEventListener('keydown', function(e) {
+
+  // up arrow key
+  if (e.which === 38) {
+    rightPaddle.dy = -paddleSpeed;
+  }
+  // down arrow key
+  else if (e.which === 40) {
+    rightPaddle.dy = paddleSpeed;
+  }
+
+  // w key
+  if (e.which === 87) {
+    leftPaddle.dy = -paddleSpeed;
+  }
+  // a key
+  else if (e.which === 83) {
+    leftPaddle.dy = paddleSpeed;
+  }
+});
+
+// listen to keyboard events to stop the paddle if key is released
+document.addEventListener('keyup', function(e) {
+  if (e.which === 38 || e.which === 40) {
+    rightPaddle.dy = 0;
+  }
+
+  if (e.which === 83 || e.which === 87) {
+    leftPaddle.dy = 0;
+  }
+});
+
+// start the game
+requestAnimationFrame(loop);
+</script>
 </body>
-
 </html>
